@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f3f5ee">
+  <title>Word Order Practice</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #203a37;
+      --muted: #657671;
+      --paper: #f3f5ee;
+      --white: #fffefa;
+      --green: #1b705d;
+      --green-dark: #125746;
+      --line: #d9dfd4;
+      --coral: #dd765e;
+      --yellow: #f4ce72;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      background-color: var(--paper);
+      background-image: radial-gradient(#d9e1d2 0.7px, transparent 0.7px);
+      background-size: 17px 17px;
+      font-family: "Avenir Next", Avenir, "Trebuchet MS", sans-serif;
+    }
+
+    main {
+      width: min(880px, calc(100% - 32px));
+      margin: 0 auto;
+      padding: 34px 0 48px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 18px;
+      padding-bottom: 18px;
+      border-bottom: 2px solid var(--ink);
+    }
+
+    .eyebrow {
+      margin: 0 0 6px;
+      color: var(--green);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+    }
+
+    h1 { margin: 0; font-size: 30px; line-height: 1.12; }
+    .header-actions { display: flex; align-items: center; gap: 12px; }
+    .count { color: var(--muted); font-size: 14px; font-weight: 700; white-space: nowrap; }
+
+    .workspace {
+      display: grid;
+      grid-template-columns: minmax(0, 1.45fr) minmax(220px, 0.75fr);
+      gap: 36px;
+      padding-top: 30px;
+    }
+
+    .practice { min-width: 0; }
+    .progress-line { display: flex; justify-content: space-between; gap: 12px; align-items: center; }
+    .progress-label { margin: 0; color: var(--muted); font-size: 13px; font-weight: 800; text-transform: uppercase; }
+    .progress-track { height: 5px; margin: 11px 0 25px; overflow: hidden; background: #dce3d9; }
+    .progress-fill { width: 0; height: 100%; background: var(--coral); transition: width 220ms ease; }
+
+    .prompt {
+      min-height: 210px;
+      display: grid;
+      align-content: center;
+      justify-items: center;
+      gap: 12px;
+      border-top: 5px solid var(--yellow);
+      border-bottom: 1px solid var(--line);
+      padding: 24px 16px;
+      background: var(--white);
+      text-align: center;
+    }
+
+    .prompt-label { margin: 0; color: var(--muted); font-size: 14px; }
+    #wordDisplay { min-height: 1.35em; margin: 0; font-size: clamp(36px, 9vw, 60px); line-height: 1.1; overflow-wrap: anywhere; }
+    #hintDisplay { min-height: 22px; margin: 0; color: var(--green); font-size: 17px; font-weight: 800; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 17px; }
+    button { min-height: 44px; border: 1px solid var(--green-dark); border-radius: 4px; padding: 9px 15px; font: inherit; font-weight: 700; cursor: pointer; }
+    button:focus-visible { outline: 3px solid var(--yellow); outline-offset: 2px; }
+    .primary { color: white; background: var(--green); }
+    .primary:hover { background: var(--green-dark); }
+    .secondary { color: var(--green-dark); background: var(--white); }
+    .secondary:hover { background: #e9f1e8; }
+    button[hidden] { display: none; }
+
+    .sequence-note { margin: 15px 0 0; color: var(--muted); font-size: 14px; }
+
+    .history {
+      border-left: 1px solid var(--line);
+      padding-left: 22px;
+    }
+
+    .history-heading { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding-bottom: 10px; border-bottom: 1px solid var(--line); }
+    h2 { margin: 0; font-size: 17px; }
+    #historyCount { color: var(--muted); font-size: 12px; }
+    #historyText { margin: 12px 0 0; font-size: 16px; font-weight: 700; line-height: 1.7; overflow-wrap: anywhere; }
+    #historyText:empty { color: var(--muted); font-size: 14px; font-weight: 400; }
+
+    @media (max-width: 620px) {
+      main { padding-top: 22px; }
+      h1 { font-size: 26px; }
+      header { align-items: start; }
+      .header-actions { align-items: end; flex-direction: column-reverse; gap: 7px; }
+      .header-actions button { min-height: 38px; padding: 7px 10px; font-size: 13px; }
+      .workspace { grid-template-columns: 1fr; gap: 28px; padding-top: 22px; }
+      .history { border-top: 1px solid var(--line); border-left: 0; padding: 17px 0 0; }
+      .prompt { min-height: 185px; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <div>
+        <p class="eyebrow">Memory practice</p>
+        <h1>Word order</h1>
+      </div>
+      <div class="header-actions">
+        <div class="count" id="wordCount"></div>
+        <button class="secondary" id="startOverButton" type="button">Start over</button>
+      </div>
+    </header>
+
+    <div class="workspace">
+      <section class="practice" aria-label="Word practice">
+        <div class="progress-line">
+          <p class="progress-label" id="progressLabel">Ready</p>
+        </div>
+        <div class="progress-track" aria-hidden="true"><div class="progress-fill" id="progressFill"></div></div>
+
+        <div class="prompt" aria-live="polite" aria-atomic="true">
+          <p class="prompt-label" id="promptLabel">Say the next word in your head.</p>
+          <p id="wordDisplay">Ready?</p>
+          <p id="hintDisplay"></p>
+        </div>
+
+        <div class="controls">
+          <button class="secondary" id="hintButton" type="button">Show first-letter hint</button>
+          <button class="primary" id="revealButton" type="button">Show word</button>
+        </div>
+        <p class="sequence-note" id="sequenceNote">There are 3 words in this sequence.</p>
+      </section>
+
+      <aside class="history" aria-labelledby="historyHeading">
+        <div class="history-heading">
+          <h2 id="historyHeading">Words revealed</h2>
+          <span id="historyCount">0 words</span>
+        </div>
+        <p id="historyText" aria-live="polite">Your revealed words will appear here.</p>
+      </aside>
+    </div>
+  </main>
+
+  <script>
+    const words = [
+        "about", "above", "aboard", "across", "after", "against", "along", 
+        "amid", "among", "around", "as", "at", "atop", 
+        "before", "behind", "below", "beneath", "beside", "between", "beyond", "but", "by",
+        "concerning", "down", "during", "except", "for", "from", "in", "inside", "into", "like",
+        "near", "of", "off", "on", "onto", "out", "outside", "over", "past", "regarding", "since", 
+        "through", "throughout", "to", "toward", "under", "underneath", "until", "up", "upon",
+        "with", "within", "without"];
+
+    const history = [];
+    let currentIndex = 0;
+      let hintLength = 0;
+
+    const progressLabel = document.getElementById("progressLabel");
+    const progressFill = document.getElementById("progressFill");
+    const promptLabel = document.getElementById("promptLabel");
+    const wordDisplay = document.getElementById("wordDisplay");
+    const hintDisplay = document.getElementById("hintDisplay");
+    const hintButton = document.getElementById("hintButton");
+    const revealButton = document.getElementById("revealButton");
+    const startOverButton = document.getElementById("startOverButton");
+    const historyText = document.getElementById("historyText");
+
+    document.getElementById("wordCount").textContent = `${words.length} words`;
+    document.getElementById("sequenceNote").textContent = `There are ${words.length} words in this sequence.`;
+
+    function renderProgress() {
+      if (currentIndex >= words.length) {
+        progressLabel.textContent = "Sequence complete";
+        progressFill.style.width = "100%";
+        return;
+      }
+      progressLabel.textContent = `Word ${currentIndex + 1} of ${words.length}`;
+      progressFill.style.width = `${(currentIndex / words.length) * 100}%`;
+    }
+
+    function renderHistory() {
+      historyText.textContent = history.length
+        ? history.join(", ")
+        : "Your revealed words will appear here.";
+      document.getElementById("historyCount").textContent = `${history.length} ${history.length === 1 ? "word" : "words"}`;
+    }
+
+    hintButton.addEventListener("click", () => {
+      if (currentIndex >= words.length) return;
+      const word = words[currentIndex];
+      hintLength = Math.min(hintLength + 1, word.length);
+      wordDisplay.textContent = word.slice(0, hintLength);
+      promptLabel.textContent = `Hint: ${hintLength} of ${word.length} letters`;
+      hintDisplay.textContent = "";
+    });
+
+    revealButton.addEventListener("click", () => {
+      if (currentIndex >= words.length) return;
+      const word = words[currentIndex];
+      wordDisplay.textContent = word;
+      promptLabel.textContent = "Word revealed";
+      hintDisplay.textContent = "";
+      hintLength = 0;
+      history.unshift(word);
+      currentIndex += 1;
+      renderHistory();
+      renderProgress();
+      if (currentIndex >= words.length) {
+        promptLabel.textContent = "Sequence complete";
+        hintButton.disabled = true;
+        revealButton.disabled = true;
+      }
+    });
+
+    startOverButton.addEventListener("click", () => {
+      currentIndex = 0;
+      history.length = 0;
+      wordDisplay.textContent = "Ready?";
+      promptLabel.textContent = "Say the next word in your head.";
+      hintDisplay.textContent = "";
+      hintLength = 0;
+      hintButton.disabled = false;
+      revealButton.disabled = false;
+      renderHistory();
+      renderProgress();
+    });
+
+    renderProgress();
+    renderHistory();
+  </script>
+</body>
+</html>
