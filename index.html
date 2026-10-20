@@ -151,6 +151,7 @@
         <div class="controls">
           <button class="secondary" id="hintButton" type="button">Show first-letter hint</button>
           <button class="primary" id="revealButton" type="button">Show word</button>
+          <button class="secondary" id="skipGroupButton" type="button">Skip letter group</button>
         </div>
         <p class="sequence-note" id="sequenceNote">There are 3 words in this sequence.</p>
       </section>
@@ -186,6 +187,7 @@
     const hintDisplay = document.getElementById("hintDisplay");
     const hintButton = document.getElementById("hintButton");
     const revealButton = document.getElementById("revealButton");
+    const skipGroupButton = document.getElementById("skipGroupButton");
     const startOverButton = document.getElementById("startOverButton");
     const historyText = document.getElementById("historyText");
 
@@ -196,10 +198,19 @@
       if (currentIndex >= words.length) {
         progressLabel.textContent = "Sequence complete";
         progressFill.style.width = "100%";
+        skipGroupButton.disabled = true;
         return;
       }
-      progressLabel.textContent = `Word ${currentIndex + 1} of ${words.length}`;
+      const word = words[currentIndex];
+      const initial = word.charAt(0).toUpperCase();
+      const wordsWithInitial = words.filter(item => item.charAt(0).toUpperCase() === initial);
+      const positionForInitial = words
+        .slice(0, currentIndex + 1)
+        .filter(item => item.charAt(0).toUpperCase() === initial)
+        .length;
+      progressLabel.textContent = `Word ${currentIndex + 1} of ${words.length} / ${initial} ${positionForInitial} of ${wordsWithInitial.length}`;
       progressFill.style.width = `${(currentIndex / words.length) * 100}%`;
+      skipGroupButton.disabled = !words.slice(currentIndex + 1).some(item => item.charAt(0).toUpperCase() !== initial);
     }
 
     function renderHistory() {
@@ -234,6 +245,22 @@
         hintButton.disabled = true;
         revealButton.disabled = true;
       }
+    });
+
+    skipGroupButton.addEventListener("click", () => {
+      if (currentIndex >= words.length) return;
+      const initial = words[currentIndex].charAt(0).toUpperCase();
+      const nextGroupIndex = words.findIndex((word, index) =>
+        index > currentIndex && word.charAt(0).toUpperCase() !== initial
+      );
+      if (nextGroupIndex === -1) return;
+
+      currentIndex = nextGroupIndex;
+      hintLength = 0;
+      wordDisplay.textContent = history[0] || "Ready?";
+      promptLabel.textContent = "Skipped to the next letter group.";
+      hintDisplay.textContent = "";
+      renderProgress();
     });
 
     startOverButton.addEventListener("click", () => {
